@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { RelayClient } from "./client.js";
 import { startRelay } from "./relay.js";
 import { registerAllTools } from "./tools.js";
+import { discoverRelay, writePortFile, removePortFile } from "./discover.js";
 
 async function main() {
   const server = new McpServer({
@@ -15,24 +16,35 @@ async function main() {
 
   const externalUrl = process.env.RELAY_URL;
   let relayUrl: string;
+  let ownsRelay = false;
 
   if (externalUrl) {
     relayUrl = externalUrl;
     console.error(`[bridge] using external relay: ${relayUrl}`);
   } else {
-    const handle = await startRelay();
-    relayUrl = handle.url;
-    console.error(`[bridge] embedded relay started on ${relayUrl}`);
+    const existingUrl = await discoverRelay();
+    if (existingUrl) {
+      relayUrl = existingUrl;
+      console.error(`[bridge] reusing existing relay at ${relayUrl}`);
+    } else {
+      const handle = await startRelay();
+      relayUrl = handle.url;
+      ownsRelay = true;
+      writePortFile(handle.port);
+      console.error(`[bridge] embedded relay started on ${relayUrl}`);
+    }
   }
 
   const client = new RelayClient(relayUrl);
 
   function shutdown() {
     client.close();
+    if (ownsRelay) removePortFile();
     process.exit(0);
   }
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
+  if (ownsRelay) process.on("exit", removePortFile);
 
   try {
     await client.connect();

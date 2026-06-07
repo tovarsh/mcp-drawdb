@@ -28,7 +28,7 @@ export function startRelay(options?: {
   const CORS_ORIGIN = options?.corsOrigin ?? process.env.CORS_ORIGIN ?? "*";
 
   const browsers = new Map<string, Peer>();
-  let npxClient: { ws: WebSocket } | null = null;
+  const npxClients = new Map<string, Peer>();
   const pendingRequests = new Map<string, WebSocket>();
   let actualPort = START_PORT;
 
@@ -54,7 +54,7 @@ export function startRelay(options?: {
       port: actualPort,
       url: `ws://localhost:${actualPort}`,
       browsers: browsers.size,
-      npxConnected: npxClient !== null,
+      npxClients: npxClients.size,
     }));
   });
 
@@ -78,8 +78,8 @@ export function startRelay(options?: {
       const peer: Peer = { ws, sessionId, lastActive: Date.now() };
       browsers.set(sessionId, peer);
       send(ws, { type: Msg.BROWSER_REGISTERED, sessionId });
-      if (npxClient) {
-        send(npxClient.ws, { type: Msg.CLIENT_CONNECTED });
+      for (const client of npxClients.values()) {
+        send(client.ws, { type: Msg.CLIENT_CONNECTED });
       }
       console.error(`[relay] browser registered: ${sessionId}`);
     },
@@ -102,26 +102,25 @@ export function startRelay(options?: {
     },
 
     [Msg.CLIENT_CONNECT](_msg, ws) {
-      npxClient = { ws };
+      const sessionId = crypto.randomUUID().slice(0, 6);
+      const peer: Peer = { ws, sessionId, lastActive: Date.now() };
+      npxClients.set(sessionId, peer);
       send(ws, { type: Msg.CLIENT_CONNECTED });
-      console.error("[relay] npx client connected");
+      console.error(`[relay] npx client connected: ${sessionId}`);
     },
 
-    [Msg.CLIENT_TOOL_CALL](msg) {
+    [Msg.CLIENT_TOOL_CALL](msg, ws) {
       const browser = getActiveBrowser();
       if (!browser) {
-        const ws = npxClient?.ws;
-        if (ws) send(ws, {
+        send(ws, {
           type: Msg.CLIENT_ERROR,
           requestId: msg.requestId,
           message: "No browser connected",
         });
         return;
       }
-      const npxWs = npxClient?.ws;
-      if (!npxWs) return;
       browser.lastActive = Date.now();
-      pendingRequests.set(msg.requestId, npxWs);
+      pendingRequests.set(msg.requestId, ws);
       send(browser.ws, {
         type: Msg.BROWSER_TOOL_CALL,
         requestId: msg.requestId,
@@ -161,12 +160,15 @@ export function startRelay(options?: {
           return;
         }
       }
-      if (npxClient?.ws === ws) {
-        npxClient = null;
-        for (const [requestId, npxWs] of pendingRequests) {
-          if (npxWs === ws) pendingRequests.delete(requestId);
+      for (const [id, peer] of npxClients) {
+        if (peer.ws === ws) {
+          npxClients.delete(id);
+          for (const [requestId, npxWs] of pendingRequests) {
+            if (npxWs === ws) pendingRequests.delete(requestId);
+          }
+          console.error(`[relay] npx client disconnected: ${id}`);
+          return;
         }
-        console.error("[relay] npx client disconnected");
       }
     });
   });
