@@ -1,0 +1,51 @@
+{
+  "name": "mcp-drawdb",
+  "version": "0.3.0",
+  "description": "MCP bridge for drawdb — connects Claude Code to drawdb in your browser via WebSocket relay",
+  "author": "JKnight <dev@cns.red> (https://log.cns.red)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tovarsh/mcp-drawdb.git"
+  },
+  "homepage": "https://github.com/tovarsh/mcp-drawdb",
+  "bugs": {
+    "url": "https://github.com/tovarsh/mcp-drawdb/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-drawdb": "./dist/index.js",
+    "mcp-drawdb-relay": "./dist/relay.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "relay": "tsx src/relay-server.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "drawdb",
+    "diagram",
+    "database"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "ws": "^8.18.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
