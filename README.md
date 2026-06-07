@@ -10,8 +10,8 @@ MCP server for [drawdb](https://github.com/drawdb-io/drawdb) — lets AI assista
 Claude Code  ──stdio──►  npx mcp-drawdb  ──ws──►  Relay (embedded)  ◄──ws──  Browser (drawdb)
 ```
 
-- **npx mcp-drawdb** starts a WebSocket relay server internally (auto port 3001→3002→...), then connects as a client
-- **drawdb** in the browser connects to the relay, exposes diagram state to tools
+- **npx mcp-drawdb** starts a WebSocket relay server internally (auto port 23432–23442), then connects as a client. If a relay is already running, it reuses it.
+- **drawdb** in the browser auto-scans ports 23432–23442 to find the relay, exposes diagram state to tools
 - The relay routes messages between Claude Code and the browser
 
 No separate relay process needed — everything runs inside the MCP bridge.
@@ -37,7 +37,7 @@ Add to your `claude_desktop_config.json` or `.claude/settings.json`:
 
 Open [drawdb.icen.ai](https://drawdb.icen.ai) in your browser. You'll see a green **MCP** dot in the header when connected.
 
-> **Gray dot?** The relay port may not be 3001. Click the MCP dot to change the WebSocket URL. The relay auto-detects ports 3001–3011, so check which port it printed on startup.
+> **Gray dot?** The relay may be on a different port. The browser auto-scans 23432–23442, so just wait a moment. You can also click the MCP dot to manually set the WebSocket URL.
 
 ### 3. Done
 
@@ -74,7 +74,7 @@ Claude Code can now read and modify your diagrams. Try:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `RELAY_URL` | *(embedded)* | Connect to an external relay instead of starting one |
-| `PORT` | `3001` | Starting port for the relay (auto-increments if occupied) |
+| `PORT` | `23432` | Starting port for the relay (auto-increments up to 23442) |
 | `HOST` | `0.0.0.0` | Relay listen address |
 | `CORS_ORIGIN` | `*` | CORS origin for the relay HTTP endpoint |
 
@@ -101,7 +101,7 @@ When using `add_table`, `update_table`, each field supports:
 
 **HTTPS and `ws://localhost`?** All major browsers exempt localhost from mixed content checks. `ws://localhost` works from `https://drawdb.icen.ai` without `wss://`.
 
-**Port 3001 is occupied?** The relay auto-detects ports 3001–3011. If it picks 3002, click the MCP indicator in drawdb.icen.ai header to update the URL.
+**Port 23432 is occupied?** The relay auto-detects ports 23432–23442. The browser scans all ports automatically, so it will find the relay wherever it is.
 
 ## Standalone Relay
 
@@ -120,7 +120,7 @@ Then configure the bridge with `RELAY_URL`:
       "command": "npx",
       "args": ["mcp-drawdb"],
       "env": {
-        "RELAY_URL": "ws://your-server:3001"
+        "RELAY_URL": "ws://your-server:23432"
       }
     }
   }

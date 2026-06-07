@@ -10,8 +10,8 @@ drawdb 的 MCP 服务器 —— 让 AI 助手（Claude Code、Cursor 等）直�
 Claude Code  ──stdio──►  npx mcp-drawdb  ──ws──►  Relay（内嵌）  ◄──ws──  浏览器（drawdb）
 ```
 
-- **npx mcp-drawdb** 内部自动启动 WebSocket 中继服务器（端口从 3001 自动递增），同时作为客户端连接
-- **drawdb** 浏览器端连接中继，将图表状态暴露给工具调用
+- **npx mcp-drawdb** 内部自动启动 WebSocket 中继服务器（端口 23432–23442 自动探测），如果已有中继在运行则直接复用
+- **drawdb** 浏览器端自动扫描 23432–23442 端口找到中继，将图表状态暴露给工具调用
 - 中继在 Claude Code 和浏览器之间路由消息
 
 无需单独启动中继 —— 一切都在 MCP 桥接进程内完成。
@@ -37,7 +37,7 @@ Claude Code  ──stdio──►  npx mcp-drawdb  ──ws──►  Relay（�
 
 打开 [drawdb.icen.ai](https://drawdb.icen.ai)，顶部出现绿色 **MCP** 圆点即表示已连接。
 
-> **灰色圆点？** 中继端口可能不是 3001。点击 MCP 圆点修改 WebSocket 地址。中继会自动尝试 3001–3011 端口，启动时会打印实际端口。
+> **灰色圆点？** 浏览器会自动扫描 23432–23442 端口，稍等片刻即可。也可以点击 MCP 圆点手动设置 WebSocket 地址。
 
 ### 3. 完成
 
@@ -74,7 +74,7 @@ Claude Code 现在可以读写你的设计图了。试试：
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `RELAY_URL` | *（内嵌）* | 连接外部中继而非启动内嵌的 |
-| `PORT` | `3001` | 中继起始端口（被占用时自动递增） |
+| `PORT` | `23432` | 中继起始端口（被占用时自动递增至 23442） |
 | `HOST` | `0.0.0.0` | 中继监听地址 |
 | `CORS_ORIGIN` | `*` | 中继 HTTP 端点的 CORS 来源 |
 
@@ -101,7 +101,7 @@ Claude Code 现在可以读写你的设计图了。试试：
 
 **HTTPS 下能用 `ws://localhost` 吗？** 所有主流浏览器将 localhost 排除在混合内容限制之外，从 `https://drawdb.icen.ai` 连接 `ws://localhost` 不需要 `wss://`。
 
-**端口 3001 被占用？** 中继会自动尝试 3001–3011 端口。如果用的是 3002，点击 drawdb.icen.ai 顶部的 MCP 圆点修改地址即可。
+**端口被占用？** 中继自动探测 23432–23442 端口。浏览器也会自动扫描所有端口，无需手动配置。
 
 ## 独立中继
 
@@ -120,7 +120,7 @@ npx mcp-drawdb-relay
       "command": "npx",
       "args": ["mcp-drawdb"],
       "env": {
-        "RELAY_URL": "ws://your-server:3001"
+        "RELAY_URL": "ws://your-server:23432"
       }
     }
   }
