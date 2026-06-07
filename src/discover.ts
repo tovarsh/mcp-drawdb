@@ -5,7 +5,7 @@ import path from "path";
 
 const DIR = path.join(os.homedir(), ".mcp-drawdb");
 const PORT_FILE = path.join(DIR, "relay.json");
-const DEFAULT_PORT = 3001;
+const DEFAULT_PORT = 23432;
 const PROBE_TIMEOUT = 1500;
 
 interface PortFileData {

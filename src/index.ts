@@ -7,13 +7,11 @@ import { startRelay } from "./relay.js";
 import { registerAllTools } from "./tools.js";
 import { discoverRelay, writePortFile, removePortFile } from "./discover.js";
 
-async function main() {
-  const server = new McpServer({
-    name: "mcp-drawdb",
-    version: "0.3.2",
-    description: "Interact with drawdb database diagrams in the browser. Open https://drawdb.icen.ai/editor before using.",
-  });
+const PORT_START = 23432;
+const PORT_END = 23442;
 
+async function main() {
+  // --- Resolve relay URL first ---
   const externalUrl = process.env.RELAY_URL;
   let relayUrl: string;
   let ownsRelay = false;
@@ -35,6 +33,22 @@ async function main() {
     }
   }
 
+  const port = parseInt(relayUrl.replace(/.*:(\d+)\/?/, "$1"), 10);
+
+  // --- Create MCP server with dynamic instructions ---
+  const server = new McpServer({
+    name: "mcp-drawdb",
+    version: "0.3.2",
+  }, {
+    instructions: [
+      "Interact with drawdb database diagrams in the browser.",
+      "The browser at https://drawdb.icen.ai/editor must be open and connected to the relay for tools to work.",
+      `Relay server is running at ${relayUrl}. The browser auto-scans ports ${PORT_START}-${PORT_END} to find the relay.`,
+      "If a tool returns 'No browser connected', ask the user to open or refresh https://drawdb.icen.ai/editor.",
+    ].join("\n"),
+  });
+
+  // --- Connect to relay ---
   const client = new RelayClient(relayUrl);
 
   function shutdown() {

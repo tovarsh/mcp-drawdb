@@ -22,7 +22,7 @@ export function startRelay(options?: {
   host?: string;
   corsOrigin?: string;
 }): Promise<RelayHandle> {
-  const START_PORT = options?.startPort ?? parseInt(process.env.PORT || "3001", 10);
+  const START_PORT = options?.startPort ?? parseInt(process.env.PORT || "23432", 10);
   const MAX_PORT = START_PORT + 10;
   const HOST = options?.host ?? process.env.HOST ?? "0.0.0.0";
   const CORS_ORIGIN = options?.corsOrigin ?? process.env.CORS_ORIGIN ?? "*";
