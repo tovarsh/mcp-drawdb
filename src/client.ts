@@ -81,7 +81,7 @@ export class RelayClient {
 
   async call(name: string, args: Record<string, unknown>, timeoutMs = 30000): Promise<RelayResponse> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error("Not connected to relay. Is the relay server running? Is drawdb open in your browser?");
+      throw new Error("Not connected to relay");
     }
 
     const requestId = crypto.randomUUID();

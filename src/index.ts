@@ -9,7 +9,8 @@ import { registerAllTools } from "./tools.js";
 async function main() {
   const server = new McpServer({
     name: "mcp-drawdb",
-    version: "0.3.0",
+    version: "0.3.2",
+    description: "Interact with drawdb database diagrams in the browser. Open https://drawdb.icen.ai/editor before using.",
   });
 
   const externalUrl = process.env.RELAY_URL;
