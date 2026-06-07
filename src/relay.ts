@@ -60,6 +60,16 @@ export function startRelay(options?: {
 
   const wss = new WebSocketServer({ server });
 
+  // wss must also handle errors from the underlying HTTP server,
+  // otherwise EADDRINUSE becomes an unhandled error on the WebSocketServer.
+  wss.on("error", (err: any) => {
+    if (err.code === "EADDRINUSE") {
+      // Handled by server error listener below — ignore here
+      return;
+    }
+    console.error("[relay] wss error:", err);
+  });
+
   // --- Message handler map ---
 
   const handlers: Record<string, (msg: any, ws: WebSocket) => void> = {
@@ -164,25 +174,35 @@ export function startRelay(options?: {
   // --- Port auto-detection ---
 
   return new Promise<RelayHandle>((resolve, reject) => {
+    let settled = false;
+
     function tryListen(port: number) {
       if (port > MAX_PORT) {
-        reject(new Error(`No available port in range ${START_PORT}-${MAX_PORT}`));
+        if (!settled) {
+          settled = true;
+          reject(new Error(`No available port in range ${START_PORT}-${MAX_PORT}`));
+        }
         return;
       }
       actualPort = port;
       server.listen(port, HOST);
     }
 
+    // Register error handler before first listen to avoid unhandled EADDRINUSE
     server.on("error", (err: any) => {
+      if (settled) return;
       if (err.code === "EADDRINUSE") {
         console.error(`[relay] port ${actualPort} in use, trying ${actualPort + 1}...`);
         tryListen(actualPort + 1);
       } else {
+        settled = true;
         reject(err);
       }
     });
 
     server.on("listening", () => {
+      if (settled) return;
+      settled = true;
       const url = `ws://localhost:${actualPort}`;
       console.error(`[relay] listening on ${url}`);
       resolve({

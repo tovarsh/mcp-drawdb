@@ -1,6 +1,6 @@
 {
   "name": "mcp-drawdb",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MCP bridge for drawdb — connects Claude Code to drawdb in your browser via WebSocket relay",
   "author": "JKnight <dev@cns.red> (https://log.cns.red)",
   "license": "MIT",
